@@ -2,6 +2,124 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEET 720/720 Planner</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body{margin:0;font-family:sans-serif;background:#0f172a;color:#fff}
+nav{display:flex;justify-content:space-around;background:#020617;padding:10px;position:fixed;bottom:0;width:100%}
+nav button{background:none;border:none;color:#94a3b8;font-size:12px}
+.active{color:#38bdf8}
+section{padding:15px;padding-bottom:70px;display:none}
+h2{margin-top:0;color:#38bdf8}
+.card{background:#020617;padding:12px;border-radius:10px;margin-bottom:10px}
+.time{color:#a5f3fc;font-size:12px}
+.done{color:#22c55e}
+.fullscreen{height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory}
+.short{height:100vh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.short img{width:120px;margin-bottom:15px}
+</style>
+</head>
+<body>
+
+<section id="planner"></section>
+<section id="timetable"></section>
+<section id="shorts" class="fullscreen"></section>
+<section id="completed"></section>
+<section id="ai"></section>
+
+<nav>
+<button onclick="show('planner')">Planner</button>
+<button onclick="show('timetable')">Timetable</button>
+<button onclick="show('shorts')">Shorts</button>
+<button onclick="show('completed')">Done</button>
+<button onclick="show('ai')">AI</button>
+</nav>
+
+<script>
+const endDate=new Date("2026-02-28");
+const today=new Date();
+const daysLeft=Math.ceil((endDate-today)/86400000);
+
+const routine={
+ lunch:"15:00",
+ dinner:"21:30",
+ bath:"09:00",
+ blockedStart:16,
+ blockedEnd:20
+};
+
+const syllabus={
+ Physics:["Thermodynamics","KTG","Waves","SHM","Electrostatics"],
+ Chemistry:["Mole Concept","Thermo","Equilibrium","Electrochemistry"],
+ Biology:["Cell","Biomolecules","Genetics","Human Physiology"]
+};
+
+let completed=JSON.parse(localStorage.getItem("done")||"[]");
+
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.style.display="none");
+document.getElementById(id).style.display="block";
+}
+
+function planner(){
+let html=`<h2>📅 Planner (Days left: ${daysLeft})</h2>`;
+["Physics","Chemistry","Biology"].forEach(s=>{
+html+=`<div class='card'><b>${s}</b><br>${syllabus[s][0]}</div>`;
+});
+document.getElementById("planner").innerHTML=html;
+}
+
+function timetable(){
+let blocks=[
+"6:00–8:00 Physics",
+"8:00–10:00 Chemistry",
+"10:30–12:30 Biology",
+"14:00–15:00 Revision",
+"20:00–22:00 Practice"
+];
+let html="<h2>⏰ Today's Timetable</h2>";
+blocks.forEach(b=>html+=`<div class='card time'>${b}</div>`);
+document.getElementById("timetable").innerHTML=html;
+}
+
+const shortsData=[
+{t:"Thermodynamics",c:"ΔQ = ΔU + W",i:"https://img.icons8.com/color/200/physics.png"},
+{t:"Genetics",c:"Law of segregation",i:"https://img.icons8.com/color/200/dna.png"},
+{t:"Electrochem",c:"Nernst Equation",i:"https://img.icons8.com/color/200/battery.png"}
+];
+let shortIndex=0;
+
+function loadShort(){
+const s=shortsData[shortIndex%shortsData.length];
+document.getElementById("shorts").innerHTML+=`
+<div class='short'>
+<div>
+<img src='${s.i}'><h2>${s.t}</h2><p>${s.c}</p>
+</div>
+</div>`;
+shortIndex++;
+}
+
+document.getElementById("shorts").addEventListener("scroll",()=>{
+if(shortIndex<100)loadShort();
+});
+
+function ai(){
+document.getElementById("ai").innerHTML=`
+<h2>🧠 AI Support</h2>
+<div class='card'>You're doing great. Focus on execution today.</div>`;
+}
+
+planner(); timetable(); ai(); loadShort(); show("planner");
+</script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NEET 720/720 Autonomous Planner</title>
 <link rel="manifest" href="manifest.json">
