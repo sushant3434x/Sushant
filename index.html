@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEET 720/720 Ultimate PWA</title>
+<title>NEET 720/720 Ultimate Planner</title>
 <link rel="manifest" href="manifest.json">
 <style>
 body{margin:0;font-family:system-ui;background:#020617;color:#e5e7eb}
@@ -17,18 +17,20 @@ nav button.active{color:#22c55e}
 .section.active{display:block}
 .card{margin:10px;padding:12px;background:#020617;border-left:4px solid #22c55e;border-radius:8px}
 .subject{font-weight:bold;color:#facc15;margin-top:5px}
-.topic{font-size:13px;margin-top:4px}
+.chapter{font-weight:bold;color:#38bdf8;margin-top:2px}
+.topic{font-size:13px;margin-top:2px}
 .note{font-size:12px;color:#94a3b8}
 .actions{margin-top:6px}
-button.small{padding:4px 8px;border:none;border-radius:6px;font-size:12px}
+button.small{padding:4px 8px;border:none;border-radius:6px;font-size:12px;margin-right:4px}
 .done{background:#16a34a}
 .miss{background:#dc2626}
+.completed{border-left-color:#16a34a}
 .sunday{border-left-color:#38bdf8}
 input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid #334155;color:#e5e7eb;border-radius:6px}
 .ai{background:#020617;border-left:4px solid #a855f7}
 .chat{font-size:13px;margin-top:6px}
 .chat b{color:#a855f7}
-.chart-container{width:95%;margin:auto}
+#shortList{height:250px;overflow-y:auto}
 </style>
 </head>
 <body>
@@ -38,23 +40,19 @@ input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid 
 <div id="countdown"></div>
 </header>
 
-<!-- PLAN -->
+<!-- Planner Section -->
 <div id="plan" class="section active"></div>
+<div id="completed" class="section"></div>
 
-<!-- SHORTS -->
+<!-- Shorts Section -->
 <div id="shorts" class="section">
 <div class="card">
-<h3>🎬 NEET Shorts – High Yield</h3>
-<div class="topic"><b>Physics:</b> Carnot engine → η = 1 − T₂/T₁</div>
-<div class="topic">Capacitance in series always decreases</div>
-<div class="topic"><b>Chemistry:</b> Coordination no. ≠ oxidation state</div>
-<div class="topic">GOC → Resonance > Inductive</div>
-<div class="topic"><b>Biology:</b> NCERT lines = direct questions</div>
-<div class="topic">Human Physiology ≈ 45% paper</div>
+<h3>🎬 NEET Shorts – Scroll for concepts</h3>
+<div id="shortList"></div>
 </div>
 </div>
 
-<!-- SETTINGS -->
+<!-- Settings Section -->
 <div id="settings" class="section">
 <div class="card">
 <h3>⏰ Customize Routine</h3>
@@ -68,74 +66,115 @@ input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid 
 </div>
 </div>
 
-<!-- AI -->
+<!-- AI Section -->
 <div id="ai" class="section">
 <div class="card ai">
 <h3>🤖 NEET AI Companion</h3>
-<div class="chat" id="chat"><b>AI:</b> I’m here for you. Ask me anything.</div>
-<input id="msg" placeholder="Type your query here..." onkeydown="if(event.key==='Enter')replyAI()">
-</div>
-</div>
-
-<!-- Score Prediction -->
-<div id="score" class="section">
-<div class="card">
-<h3>📊 Score Prediction</h3>
-<canvas id="scoreChart"></canvas>
+<div class="chat" id="chat"><b>AI:</b> I’m here for you. Ask anything.</div>
+<input id="msg" placeholder="Type your query..." onkeydown="if(event.key==='Enter')replyAI()">
 </div>
 </div>
 
 <nav>
-<button onclick="show('plan')" class="active">Plan</button>
+<button onclick="show('plan')" class="active">Planner</button>
+<button onclick="show('completed')">Completed</button>
 <button onclick="show('shorts')">Shorts</button>
 <button onclick="show('settings')">Settings</button>
 <button onclick="show('ai')">AI</button>
-<button onclick="show('score')">Score</button>
 </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Countdown
 const exam=new Date("May 5, 2026 09:00").getTime();
 setInterval(()=>{document.getElementById("countdown").innerText=
-Math.floor((exam-Date.now())/86400000)+" Days Left"},1000)
+Math.floor((exam-Date.now())/86400000)+" Days Left"},1000);
 
 // Routine
-let routine=JSON.parse(localStorage.getItem("routine"))||{};
+let routine=JSON.parse(localStorage.getItem("routine"))||{lunch:'15:00',dinner:'21:30',bath:'21:00'};
+document.getElementById("lunch").value=routine.lunch;
+document.getElementById("dinner").value=routine.dinner;
+document.getElementById("bath").value=routine.bath;
 function saveRoutine(){
 routine.lunch=lunch.value;routine.dinner=dinner.value;routine.bath=bath.value;
 localStorage.setItem("routine",JSON.stringify(routine));
 alert("Routine Saved");
+generatePlanner();
 }
 
-// Plan
+// Planner Data
 const subjects=["Physics","Chemistry","Biology"];
-let saved=JSON.parse(localStorage.getItem("progress"))||{};
-const today=new Date().toDateString();
+const chapters={
+"Physics":[
+{"chapter":"Thermodynamics","topics":["Laws","Heat Engines","Entropy"]},
+{"chapter":"Electrostatics","topics":["Coulomb's Law","Capacitors","Gauss's Law"]},
+{"chapter":"Magnetism","topics":["Biot-Savart","Ampere's Law"]}
+],
+"Chemistry":[
+{"chapter":"Organic","topics":["Hydrocarbons","Alcohols","Aldehydes"]},
+{"chapter":"Inorganic","topics":["Periodic Table","Chemical Bonding"]},
+{"chapter":"Physical","topics":["Mole Concept","Thermodynamics"]}
+],
+"Biology":[
+{"chapter":"Genetics","topics":["Mendel's Laws","DNA","RNA"]},
+{"chapter":"Human Physiology","topics":["Circulatory","Respiratory","Digestive"]},
+{"chapter":"Cell Biology","topics":["Cell Cycle","Mitosis","Meiosis"]}]
+};
+
+// Generate Planner till Feb 28
+function generatePlanner(){
 const plan=document.getElementById("plan");
-let html=`<div class="card ${new Date().getDay()==0?'sunday':''}"><b>${today}</b>`;
-if(new Date().getDay()==0){
-html+=`<div class="subject">REVISION DAY</div>
+const completed=document.getElementById("completed");
+plan.innerHTML=""; completed.innerHTML="";
+let saved=JSON.parse(localStorage.getItem("progress"))||{};
+let today=new Date();
+let end=new Date("Feb 28, 2026 23:59");
+
+for(let d=new Date(today); d<=end; d.setDate(d.getDate()+1)){
+let dayStr=d.toDateString();
+let card=`<div class="card ${d.getDay()==0?'sunday':''}"><b>${dayStr}</b>`;
+let compCard=`<div class="card completed"><b>${dayStr}</b>`;
+
+if(d.getDay()==0){
+card+=`<div class="subject">REVISION DAY</div>
 <div class="topic">Full syllabus revision + 1 mock test</div>`;
 }else{
 subjects.forEach(s=>{
-html+=`<div class="subject">${s}</div>
-<div class="topic">High‑yield chapter + MCQs</div>`;
+chapters[s].forEach(c=>{
+card+=`<div class="subject">${s}</div>
+<div class="chapter">${c.chapter}</div>`;
+c.topics.forEach(t=>{
+let key=dayStr+"_"+s+"_"+c.chapter+"_"+t;
+let status=saved[key]||0;
+card+=`<div class="topic">${t} <button class="small ${status==1?'done':'miss'}" onclick="mark('${key}',1)">✔</button>
+<button class="small ${status==0?'miss':'done'}" onclick="mark('${key}',0)">✖</button></div>`;
+if(status==1) compCard+=`<div class="topic">${s} - ${c.chapter} - ${t}</div>`;
 });
-html+=`<div class="actions">
-<button class="small done" onclick="mark(1)">✔ Done</button>
-<button class="small miss" onclick="mark(0)">✖ Missed</button>
-</div>`;
+});
+});
 }
-html+="</div>";
-plan.innerHTML=html;
+card+="</div>";
+compCard+="</div>";
+plan.innerHTML+=card;
+completed.innerHTML+=compCard;
+}
+}
 
-function mark(v){
-saved[today]=v;
+// Mark Completed
+function mark(key,v){
+let saved=JSON.parse(localStorage.getItem("progress"))||{};
+saved[key]=v;
 localStorage.setItem("progress",JSON.stringify(saved));
-alert(v?"Excellent. Keep going!":"No guilt. Tomorrow we adjust.");
-updateScoreChart();
+generatePlanner();
 }
+
+// Scrollable NEET Shorts
+const shorts=["Physics: Carnot Engine η=1-T2/T1","Physics: Capacitance decreases in series","Chemistry: Coordination number ≠ oxidation state","Chemistry: GOC Resonance > Inductive","Biology: NCERT lines important","Biology: Human Physiology 45% paper"];
+function loadShorts(){
+const container=document.getElementById("shortList");
+container.innerHTML="";
+shorts.forEach(s=>{container.innerHTML+=`<div class="topic">${s}</div>`;});
+}
+loadShorts();
 
 // Tabs
 function show(id){
@@ -149,34 +188,20 @@ event.target.classList.add("active");
 function replyAI(){
 let m=msg.value.toLowerCase();
 let r="Breathe. You are capable.";
-if(m.includes("tired"))r="Rest 10 mins. Then start Biology NCERT.";
-if(m.includes("demotivated"))r="Remember your goal. 720 is built daily.";
-if(m.includes("stuck"))r="Focus on completing one topic now.";
+if(m.includes("tired"))r="Rest 10 mins, then continue Biology NCERT.";
+if(m.includes("demotivated"))r="Remember your goal. One topic at a time builds 720/720.";
+if(m.includes("stuck"))r="Focus on completing the next topic in planner.";
 if(m.includes("help"))r="Check NEET Shorts tab for formulas & key points.";
 chat.innerHTML+=`<br><b>You:</b> ${msg.value}<br><b>AI:</b> ${r}`;
 msg.value="";
 }
 
-// Score Prediction
-function updateScoreChart(){
-let done=Object.values(saved).filter(v=>v===1).length;
-let total=Object.keys(saved).length||1;
-let percent=Math.floor((done/total)*720);
-const ctx=document.getElementById('scoreChart').getContext('2d');
-new Chart(ctx,{
-type:'bar',
-data:{
-labels:['Predicted Score'],
-datasets:[{label:'Score',data:[percent],backgroundColor:'#22c55e'}]
-},
-options:{indexAxis:'y',scales:{x:{max:720}}}
-});
-}
-updateScoreChart();
+// Init
+generatePlanner();
 
-// PWA install prompt
-if('serviceWorker'in navigator){
-navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW registered"))
+// PWA service worker
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW Registered"));
 }
 </script>
 </body>
