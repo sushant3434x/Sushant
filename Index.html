@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEET 720/720 Ultimate PWA</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body{margin:0;font-family:system-ui;background:#020617;color:#e5e7eb}
+header{padding:14px;text-align:center;border-bottom:1px solid #1e293b}
+h1{font-size:18px;margin:0}
+#countdown{color:#38bdf8;font-size:13px;margin-top:4px}
+nav{display:flex;justify-content:space-around;padding:8px;background:#020617;border-top:1px solid #1e293b;position:fixed;bottom:0;width:100%}
+nav button{background:none;border:none;color:#94a3b8;font-size:13px}
+nav button.active{color:#22c55e}
+.section{display:none;padding-bottom:70px}
+.section.active{display:block}
+.card{margin:10px;padding:12px;background:#020617;border-left:4px solid #22c55e;border-radius:8px}
+.subject{font-weight:bold;color:#facc15;margin-top:5px}
+.topic{font-size:13px;margin-top:4px}
+.note{font-size:12px;color:#94a3b8}
+.actions{margin-top:6px}
+button.small{padding:4px 8px;border:none;border-radius:6px;font-size:12px}
+.done{background:#16a34a}
+.miss{background:#dc2626}
+.sunday{border-left-color:#38bdf8}
+input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid #334155;color:#e5e7eb;border-radius:6px}
+.ai{background:#020617;border-left:4px solid #a855f7}
+.chat{font-size:13px;margin-top:6px}
+.chat b{color:#a855f7}
+.chart-container{width:95%;margin:auto}
+</style>
+</head>
+<body>
+
+<header>
+<h1>NEET 720/720 Ultimate Planner</h1>
+<div id="countdown"></div>
+</header>
+
+<!-- PLAN -->
+<div id="plan" class="section active"></div>
+
+<!-- SHORTS -->
+<div id="shorts" class="section">
+<div class="card">
+<h3>🎬 NEET Shorts – High Yield</h3>
+<div class="topic"><b>Physics:</b> Carnot engine → η = 1 − T₂/T₁</div>
+<div class="topic">Capacitance in series always decreases</div>
+<div class="topic"><b>Chemistry:</b> Coordination no. ≠ oxidation state</div>
+<div class="topic">GOC → Resonance > Inductive</div>
+<div class="topic"><b>Biology:</b> NCERT lines = direct questions</div>
+<div class="topic">Human Physiology ≈ 45% paper</div>
+</div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+<div class="card">
+<h3>⏰ Customize Routine</h3>
+<label>Lunch Time</label>
+<input id="lunch" type="time">
+<label>Dinner Time</label>
+<input id="dinner" type="time">
+<label>Bath / Fresh Time</label>
+<input id="bath" type="time">
+<button class="small done" onclick="saveRoutine()">Save</button>
+</div>
+</div>
+
+<!-- AI -->
+<div id="ai" class="section">
+<div class="card ai">
+<h3>🤖 NEET AI Companion</h3>
+<div class="chat" id="chat"><b>AI:</b> I’m here for you. Ask me anything.</div>
+<input id="msg" placeholder="Type your query here..." onkeydown="if(event.key==='Enter')replyAI()">
+</div>
+</div>
+
+<!-- Score Prediction -->
+<div id="score" class="section">
+<div class="card">
+<h3>📊 Score Prediction</h3>
+<canvas id="scoreChart"></canvas>
+</div>
+</div>
+
+<nav>
+<button onclick="show('plan')" class="active">Plan</button>
+<button onclick="show('shorts')">Shorts</button>
+<button onclick="show('settings')">Settings</button>
+<button onclick="show('ai')">AI</button>
+<button onclick="show('score')">Score</button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Countdown
+const exam=new Date("May 5, 2026 09:00").getTime();
+setInterval(()=>{document.getElementById("countdown").innerText=
+Math.floor((exam-Date.now())/86400000)+" Days Left"},1000)
+
+// Routine
+let routine=JSON.parse(localStorage.getItem("routine"))||{};
+function saveRoutine(){
+routine.lunch=lunch.value;routine.dinner=dinner.value;routine.bath=bath.value;
+localStorage.setItem("routine",JSON.stringify(routine));
+alert("Routine Saved");
+}
+
+// Plan
+const subjects=["Physics","Chemistry","Biology"];
+let saved=JSON.parse(localStorage.getItem("progress"))||{};
+const today=new Date().toDateString();
+const plan=document.getElementById("plan");
+let html=`<div class="card ${new Date().getDay()==0?'sunday':''}"><b>${today}</b>`;
+if(new Date().getDay()==0){
+html+=`<div class="subject">REVISION DAY</div>
+<div class="topic">Full syllabus revision + 1 mock test</div>`;
+}else{
+subjects.forEach(s=>{
+html+=`<div class="subject">${s}</div>
+<div class="topic">High‑yield chapter + MCQs</div>`;
+});
+html+=`<div class="actions">
+<button class="small done" onclick="mark(1)">✔ Done</button>
+<button class="small miss" onclick="mark(0)">✖ Missed</button>
+</div>`;
+}
+html+="</div>";
+plan.innerHTML=html;
+
+function mark(v){
+saved[today]=v;
+localStorage.setItem("progress",JSON.stringify(saved));
+alert(v?"Excellent. Keep going!":"No guilt. Tomorrow we adjust.");
+updateScoreChart();
+}
+
+// Tabs
+function show(id){
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+event.target.classList.add("active");
+}
+
+// AI
+function replyAI(){
+let m=msg.value.toLowerCase();
+let r="Breathe. You are capable.";
+if(m.includes("tired"))r="Rest 10 mins. Then start Biology NCERT.";
+if(m.includes("demotivated"))r="Remember your goal. 720 is built daily.";
+if(m.includes("stuck"))r="Focus on completing one topic now.";
+if(m.includes("help"))r="Check NEET Shorts tab for formulas & key points.";
+chat.innerHTML+=`<br><b>You:</b> ${msg.value}<br><b>AI:</b> ${r}`;
+msg.value="";
+}
+
+// Score Prediction
+function updateScoreChart(){
+let done=Object.values(saved).filter(v=>v===1).length;
+let total=Object.keys(saved).length||1;
+let percent=Math.floor((done/total)*720);
+const ctx=document.getElementById('scoreChart').getContext('2d');
+new Chart(ctx,{
+type:'bar',
+data:{
+labels:['Predicted Score'],
+datasets:[{label:'Score',data:[percent],backgroundColor:'#22c55e'}]
+},
+options:{indexAxis:'y',scales:{x:{max:720}}}
+});
+}
+updateScoreChart();
+
+// PWA install prompt
+if('serviceWorker'in navigator){
+navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW registered"))
+}
+</script>
+</body>
+</html>
+
