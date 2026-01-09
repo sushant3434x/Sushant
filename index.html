@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEET 720/720 Ultimate Planner</title>
+<title>NEET 720/720 Autonomous Planner</title>
 <link rel="manifest" href="manifest.json">
 <style>
 body{margin:0;font-family:system-ui;background:#020617;color:#e5e7eb}
@@ -13,14 +13,13 @@ h1{font-size:18px;margin:0}
 nav{display:flex;justify-content:space-around;padding:8px;background:#020617;border-top:1px solid #1e293b;position:fixed;bottom:0;width:100%}
 nav button{background:none;border:none;color:#94a3b8;font-size:13px}
 nav button.active{color:#22c55e}
-.section{display:none;padding-bottom:70px}
+.section{display:none;padding-bottom:80px}
 .section.active{display:block}
 .card{margin:10px;padding:12px;background:#020617;border-left:4px solid #22c55e;border-radius:8px}
 .subject{font-weight:bold;color:#facc15;margin-top:5px}
 .chapter{font-weight:bold;color:#38bdf8;margin-top:2px}
 .topic{font-size:13px;margin-top:2px}
 .note{font-size:12px;color:#94a3b8}
-.actions{margin-top:6px}
 button.small{padding:4px 8px;border:none;border-radius:6px;font-size:12px;margin-right:4px}
 .done{background:#16a34a}
 .miss{background:#dc2626}
@@ -30,13 +29,13 @@ input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid 
 .ai{background:#020617;border-left:4px solid #a855f7}
 .chat{font-size:13px;margin-top:6px}
 .chat b{color:#a855f7}
-#shortList{height:250px;overflow-y:auto}
+#shortContainer{height:120px;padding:10px;border:1px solid #334155;border-radius:8px;text-align:center;font-weight:bold}
 </style>
 </head>
 <body>
 
 <header>
-<h1>NEET 720/720 Ultimate Planner</h1>
+<h1>NEET 720/720 Planner</h1>
 <div id="countdown"></div>
 </header>
 
@@ -48,7 +47,11 @@ input{width:100%;padding:6px;margin-top:6px;background:#020617;border:1px solid 
 <div id="shorts" class="section">
 <div class="card">
 <h3>🎬 NEET Shorts – Scroll for concepts</h3>
-<div id="shortList"></div>
+<div id="shortContainer"></div>
+<div style="margin-top:8px;text-align:center">
+<button onclick="prevShort()" class="small">◀ Prev</button>
+<button onclick="nextShort()" class="small">Next ▶</button>
+</div>
 </div>
 </div>
 
@@ -101,7 +104,7 @@ alert("Routine Saved");
 generatePlanner();
 }
 
-// Planner Data
+// Subjects & Chapters
 const subjects=["Physics","Chemistry","Biology"];
 const chapters={
 "Physics":[
@@ -120,46 +123,51 @@ const chapters={
 {"chapter":"Cell Biology","topics":["Cell Cycle","Mitosis","Meiosis"]}]
 };
 
-// Generate Planner till Feb 28
+// Planner generation
 function generatePlanner(){
 const plan=document.getElementById("plan");
 const completed=document.getElementById("completed");
 plan.innerHTML=""; completed.innerHTML="";
 let saved=JSON.parse(localStorage.getItem("progress"))||{};
 let today=new Date();
-let end=new Date("Feb 28, 2026 23:59");
-
-for(let d=new Date(today); d<=end; d.setDate(d.getDate()+1)){
-let dayStr=d.toDateString();
-let card=`<div class="card ${d.getDay()==0?'sunday':''}"><b>${dayStr}</b>`;
-let compCard=`<div class="card completed"><b>${dayStr}</b>`;
-
-if(d.getDay()==0){
-card+=`<div class="subject">REVISION DAY</div>
-<div class="topic">Full syllabus revision + 1 mock test</div>`;
-}else{
-subjects.forEach(s=>{
-chapters[s].forEach(c=>{
-card+=`<div class="subject">${s}</div>
-<div class="chapter">${c.chapter}</div>`;
-c.topics.forEach(t=>{
-let key=dayStr+"_"+s+"_"+c.chapter+"_"+t;
-let status=saved[key]||0;
-card+=`<div class="topic">${t} <button class="small ${status==1?'done':'miss'}" onclick="mark('${key}',1)">✔</button>
-<button class="small ${status==0?'miss':'done'}" onclick="mark('${key}',0)">✖</button></div>`;
-if(status==1) compCard+=`<div class="topic">${s} - ${c.chapter} - ${t}</div>`;
-});
-});
-});
+let end=new Date("Feb 28,2026 23:59");
+let timeBlocks=[
+  {start:'06:00',end:routine.lunch},
+  {start:routine.lunch,end:'16:00'},
+  {start:'20:00',end:routine.dinner},
+  {start:routine.dinner,end:'23:00'}
+];
+for(let d=new Date(today);d<=end;d.setDate(d.getDate()+1)){
+  let dayStr=d.toDateString();
+  let card=`<div class="card ${d.getDay()==0?'sunday':''}"><b>${dayStr}</b>`;
+  let compCard=`<div class="card completed"><b>${dayStr}</b>`;
+  if(d.getDay()==0){
+    card+=`<div class="subject">REVISION DAY</div><div class="topic">Full syllabus revision + 1 mock test</div>`;
+  }else{
+    let subjIndex=0;
+    subjects.forEach(s=>{
+      chapters[s].forEach(c=>{
+        card+=`<div class="subject">${s}</div><div class="chapter">${c.chapter}</div>`;
+        c.topics.forEach(t=>{
+          let key=dayStr+"_"+s+"_"+c.chapter+"_"+t;
+          let status=saved[key]||0;
+          let block=timeBlocks[subjIndex % timeBlocks.length];
+          card+=`<div class="topic">${t} <span class="note">(${block.start} - ${block.end})</span>
+          <button class="small ${status==1?'done':'miss'}" onclick="mark('${key}',1)">✔</button>
+          <button class="small ${status==0?'miss':'done'}" onclick="mark('${key}',0)">✖</button></div>`;
+          if(status==1) compCard+=`<div class="topic">${s} - ${c.chapter} - ${t}</div>`;
+          subjIndex++;
+        });
+      });
+    });
+  }
+  card+="</div>"; compCard+="</div>";
+  plan.innerHTML+=card;
+  completed.innerHTML+=compCard;
 }
-card+="</div>";
-compCard+="</div>";
-plan.innerHTML+=card;
-completed.innerHTML+=compCard;
-}
 }
 
-// Mark Completed
+// Mark topic complete/incomplete
 function mark(key,v){
 let saved=JSON.parse(localStorage.getItem("progress"))||{};
 saved[key]=v;
@@ -167,14 +175,21 @@ localStorage.setItem("progress",JSON.stringify(saved));
 generatePlanner();
 }
 
-// Scrollable NEET Shorts
-const shorts=["Physics: Carnot Engine η=1-T2/T1","Physics: Capacitance decreases in series","Chemistry: Coordination number ≠ oxidation state","Chemistry: GOC Resonance > Inductive","Biology: NCERT lines important","Biology: Human Physiology 45% paper"];
-function loadShorts(){
-const container=document.getElementById("shortList");
-container.innerHTML="";
-shorts.forEach(s=>{container.innerHTML+=`<div class="topic">${s}</div>`;});
-}
-loadShorts();
+// NEET Shorts – YouTube style
+const shorts=[
+"Physics: Carnot Engine η=1-T2/T1",
+"Physics: Capacitance decreases in series",
+"Chemistry: Coordination number ≠ oxidation state",
+"Chemistry: GOC Resonance > Inductive",
+"Biology: NCERT lines important",
+"Biology: Human Physiology 45% paper"
+];
+let shortIndex=0;
+function showShort(){document.getElementById("shortContainer").innerText=shorts[shortIndex];}
+function nextShort(){shortIndex=(shortIndex+1)%shorts.length;showShort();}
+function prevShort(){shortIndex=(shortIndex-1+shorts.length)%shorts.length;showShort();}
+setInterval(nextShort,10000);
+showShort();
 
 // Tabs
 function show(id){
@@ -184,7 +199,7 @@ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"))
 event.target.classList.add("active");
 }
 
-// AI
+// AI Companion
 function replyAI(){
 let m=msg.value.toLowerCase();
 let r="Breathe. You are capable.";
@@ -196,14 +211,11 @@ chat.innerHTML+=`<br><b>You:</b> ${msg.value}<br><b>AI:</b> ${r}`;
 msg.value="";
 }
 
-// Init
+// Initialize planner
 generatePlanner();
 
 // PWA service worker
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW Registered"));
-}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js').then(()=>console.log("SW Registered"));}
 </script>
 </body>
 </html>
-
