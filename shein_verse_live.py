@@ -25,7 +25,7 @@ from aiohttp import web
 from bs4 import BeautifulSoup
 
 # ---------------- CONFIG ----------------
-BOT_TOKEN = "8501641376:AAGUZPD44R-zXd6dClu0SA-O9u0bX4cRnKo"
+BOT_TOKEN = "PUT_YOUR_REAL_BOT_TOKEN_HERE"
 CHAT_ID = 7032063067
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 STATE_FILE = "state.json"
@@ -208,7 +208,8 @@ async def main():
     asyncio.create_task(monitor_loop())
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8080)
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     print("🚀 Bot running (webhook mode)")
     while True:
@@ -216,3 +217,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
