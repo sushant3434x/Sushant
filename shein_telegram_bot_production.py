@@ -193,6 +193,10 @@ async def handle_update(update):
 
     if text == "/start":
         await tg_send("✅ Bot running. Use /status")
+async def root(request):
+    return web.Response(text="OK")
+
+app.router.add_get("/", root)
 
 # ---------------- WEBHOOK ----------------
 async def webhook(request):
@@ -217,5 +221,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
