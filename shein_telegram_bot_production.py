@@ -4,7 +4,7 @@ import asyncio
 import aiohttp
 from aiohttp import web
 
-BOT_TOKEN = "PUT_YOUR_REAL_BOT_TOKEN_HERE"
+BOT_TOKEN = "8501641376:AAGUZPD44R-zXd6dClu0SA-O9u0bX4cRnKo"
 CHAT_ID = 7032063067
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 STATE_FILE = "state.json"
