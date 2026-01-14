@@ -1,91 +1,108 @@
 import os
 import json
-import asyncio
 import aiohttp
 from aiohttp import web
 
 BOT_TOKEN = "8501641376:AAGUZPD44R-zXd6dClu0SA-O9u0bX4cRnKo"
-CHAT_ID = 7032063067
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 STATE_FILE = "state.json"
 
 # ---------------- STATE ----------------
-def load_state():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE) as f:
-            return json.load(f)
-    return {"gender": None, "sizes": [], "pincode": None, "paused": False}
+DEFAULT_STATE = {
+    "gender": None,
+    "sizes": [],
+    "pincode": None
+}
 
-state = load_state()
-gender = state["gender"]
-sizes = set(state["sizes"])
-pincode = state["pincode"]
-paused = state["paused"]
+if os.path.exists(STATE_FILE):
+    with open(STATE_FILE) as f:
+        state = json.load(f)
+else:
+    state = DEFAULT_STATE.copy()
 
 def save_state():
     with open(STATE_FILE, "w") as f:
-        json.dump({
-            "gender": gender,
-            "sizes": list(sizes),
-            "pincode": pincode,
-            "paused": paused
-        }, f)
+        json.dump(state, f)
 
-# ---------------- TELEGRAM ----------------
-async def tg_send(text):
-    async with aiohttp.ClientSession() as s:
-        await s.post(
+# ---------------- TELEGRAM SEND ----------------
+async def tg_send(chat_id, text):
+    async with aiohttp.ClientSession() as session:
+        await session.post(
             f"{API_URL}/sendMessage",
-            json={"chat_id": CHAT_ID, "text": text}
+            json={"chat_id": chat_id, "text": text}
         )
 
-# ---------------- HANDLER ----------------
-async def handle_update(update):
-    global gender, sizes, pincode, paused
+# ---------------- WEBHOOK ----------------
+async def webhook(request):
+    data = await request.json()
 
-    msg = update.get("message")
-    if not msg or msg["chat"]["id"] != CHAT_ID:
-        return
+    msg = data.get("message")
+    if not msg:
+        return web.Response(text="ok")
 
-    text = msg.get("text", "")
+    chat_id = msg["chat"]["id"]
+    text = msg.get("text", "").strip()
 
-    if text == "/status":
+    # ---------- COMMANDS ----------
+    if text == "/start":
         await tg_send(
-            f"Gender: {gender}\nSizes: {', '.join(sizes)}\nPincode: {pincode}\nPaused: {paused}"
+            chat_id,
+            "✅ Bot is running\n\n"
+            "Commands:\n"
+            "/setgender male|female|both\n"
+            "/setsize M,L,XL\n"
+            "/setpincode 110001\n"
+            "/status"
         )
-        return
 
-    if text.startswith("/setgender"):
-        gender = text.split()[-1]
+    elif text == "/status":
+        await tg_send(
+            chat_id,
+            f"📊 STATUS\n"
+            f"Gender: {state['gender']}\n"
+            f"Sizes: {', '.join(state['sizes'])}\n"
+            f"Pincode: {state['pincode']}"
+        )
+
+    elif text.startswith("/setgender"):
+        g = text.split()[-1].lower()
+        if g in ("male", "female", "both"):
+            state["gender"] = g
+            save_state()
+            await tg_send(chat_id, f"✅ Gender set: {g}")
+        else:
+            await tg_send(chat_id, "❌ Use: /setgender male|female|both")
+
+    elif text.startswith("/setsize"):
+        sizes = text.split(maxsplit=1)[-1]
+        state["sizes"] = [s.strip().upper() for s in sizes.split(",") if s.strip()]
         save_state()
-        await tg_send(f"Gender set: {gender}")
+        await tg_send(chat_id, f"✅ Sizes set: {', '.join(state['sizes'])}")
 
-    if text.startswith("/setsize"):
-        sizes.clear()
-        for s in text.split()[-1].split(","):
-            sizes.add(s.strip().upper())
-        save_state()
-        await tg_send(f"Sizes set: {', '.join(sizes)}")
+    elif text.startswith("/setpincode"):
+        p = text.split()[-1]
+        if p.isdigit():
+            state["pincode"] = p
+            save_state()
+            await tg_send(chat_id, f"✅ Pincode set: {p}")
+        else:
+            await tg_send(chat_id, "❌ Pincode must be numbers only")
 
-    if text.startswith("/setpincode"):
-        pincode = text.split()[-1]
-        save_state()
-        await tg_send(f"Pincode set: {pincode}")
+    else:
+        await tg_send(chat_id, "❓ Unknown command")
 
-# ---------------- WEB APP ----------------
-app = web.Application()
+    return web.Response(text="ok")
 
+# ---------------- ROOT ----------------
 async def root(request):
     return web.Response(text="OK")
 
-async def webhook(request):
-    update = await request.json()
-    await handle_update(update)
-    return web.Response(text="OK")
-
+# ---------------- APP ----------------
+app = web.Application()
 app.router.add_get("/", root)
 app.router.add_post("/webhook", webhook)
 
 # ---------------- RUN ----------------
 port = int(os.environ.get("PORT", 8080))
 web.run_app(app, host="0.0.0.0", port=port)
+
