@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Metals Dashboard</title>
+</head>
+<body>
+
+<h1>📊 Personal Investment Dashboard</h1>
+
+<table border="1" cellpadding="10">
+<tr>
+  <th>Asset</th>
+  <th>Price</th>
+  <th>Avg</th>
+  <th>P/L %</th>
+</tr>
+
+{% for item in data %}
+<tr>
+  <td>{{ item.name }}</td>
+  <td>{{ item.price }}</td>
+  <td>{{ item.avg }}</td>
+  <td>{{ item.pnl }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
+
