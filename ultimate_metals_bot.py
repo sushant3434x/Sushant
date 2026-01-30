@@ -11,8 +11,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # -------- ENV VARIABLES --------
-TOKEN = os.getenv("8584187176:AAGbiTxOelG2noQNlsdgPMBCdYCZ-uk67Oc")
-CHAT_ID = os.getenv("7835819531")
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # -------- YOUR PORTFOLIO --------
 portfolio = {
@@ -178,4 +178,5 @@ scheduler.start()
 
 print("Bot running...")
 app.run_polling()
+
 
