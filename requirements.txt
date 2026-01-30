@@ -1,1 +1,10 @@
-aiohttp==3.9.5
+python-telegram-bot
+yfinance
+matplotlib
+pandas
+apscheduler
+ta
+numpy
+scikit-learn
+
+
