@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template
 import yfinance as yf
 import plotly.graph_objs as go
@@ -46,5 +47,7 @@ def chart(symbol):
     return fig.to_html(full_html=False)
 
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
 
