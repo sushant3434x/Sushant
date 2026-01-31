@@ -5,8 +5,8 @@ import logging
 from datetime import datetime
 
 
-BOT_TOKEN = "8387153384:AAHXQc9Rf9i7aIzZAPusdNTeCLtGIJi_Obs"
-CHAT_ID = "7835819531"
+BOT_TOKEN = "BOT_TOKEN"
+CHAT_ID = "CHAT_ID"
 
 
 GENDER = "Men"
@@ -83,3 +83,4 @@ if __name__ == "__main__":
         logger.critical(f"Unexpected error: {e}", exc_info=True)
         while True:
             time.sleep(60)
+
