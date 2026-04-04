@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Core Fitness | Official Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root { --alpha-red: #ff3131; --glass: rgba(0, 0, 0, 0.94); }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; min-height: 100vh; font-family: 'Poppins', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+        /* 1. LAYER -3: STATIC BG */
+        .static-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
+            background: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+            filter: brightness(0.2); transition: filter 0.4s ease;
+        }
+
+        /* 2. LAYER -2: MOTION EMOJIS */
+        .emoji-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; opacity: 0.3; }
+        .moving-emoji { position: absolute; font-size: 30px; animation: float 8s infinite linear; will-change: transform; }
+        @keyframes float {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 3. LAYER -1: BACKGROUND SLOGAN */
+        .bg-slogan-wrap { position: fixed; top: 22%; width: 100%; text-align: center; z-index: -1; pointer-events: none; }
+        #top-bg-slogan {
+            font-family: 'Montserrat', sans-serif; font-size: clamp(2rem, 8vw, 5rem);
+            font-weight: 900; text-transform: uppercase; color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* 4. MAIN UI LAYER */
+        .main-container { display: flex; flex-direction: column; align-items: center; padding: 12vh 20px 8vh; position: relative; z-index: 10; }
+        
+        .review-card {
+            background: var(--glass); backdrop-filter: blur(35px);
+            border: 1px solid rgba(255, 49, 49, 0.3); border-radius: 40px;
+            padding: 50px 30px; width: 100%; max-width: 420px;
+            text-align: center; box-shadow: 0 40px 100px rgba(0,0,0,1);
+        }
+
+        .logo-ring {
+            width: 85px; height: 85px; background: var(--alpha-red);
+            margin: -92px auto 20px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            border: 5px solid #000; box-shadow: 0 10px 25px rgba(255, 49, 49, 0.6);
+        }
+
+        h1 { font-family: 'Montserrat', sans-serif; font-size: 24px; letter-spacing: -1px; margin: 0; }
+        .location { color: var(--alpha-red); font-weight: 800; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; }
+
+        .star-box { display: flex; justify-content: center; gap: 12px; margin: 30px 0; }
+        .star-box i { font-size: 38px; color: #151515; cursor: pointer; transition: 0.3s; }
+        .star-box i.active { color: #FFD700; transform: scale(1.15); text-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+
+        textarea {
+            width: 100%; height: 115px; background: rgba(255,255,255,0.08);
+            border: 1px solid #333; border-radius: 20px; padding: 18px;
+            color: #fff; font-family: inherit; resize: none; outline: none; margin-bottom: 25px;
+        }
+        
+        .alpha-btn {
+            background: var(--alpha-red); color: #fff; border: none;
+            width: 100%; padding: 18px; border-radius: 50px;
+            font-weight: 900; text-transform: uppercase; cursor: pointer;
+            transition: 0.3s; font-size: 15px; letter-spacing: 1px;
+        }
+
+        /* 5. BOTTOM DYNAMIC SLOGAN */
+        .bottom-quote-box { margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        #bottom-dynamic-quote { font-style: italic; font-size: 13px; color: #777; opacity: 0.9; }
+
+        /* 6. INSTAGRAM BUTTON (FORCED TOP LAYER) */
+        .insta-float { 
+            position: fixed; bottom: 25px; left: 25px; background: #fff; color: #000; 
+            padding: 12px 22px; border-radius: 50px; text-decoration: none; 
+            font-weight: 700; font-size: 12px; display: flex; align-items: center; 
+            gap: 8px; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+
+        #custom-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.96); z-index: 1000; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-content {
+            background: #0a0a0a; border: 2px solid var(--alpha-red); border-radius: 35px;
+            padding: 40px 30px; text-align: center; max-width: 360px; width: 100%;
+        }
+        .modal-btn { padding: 14px; border-radius: 50px; border: none; font-weight: 700; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
+        .btn-change { background: var(--alpha-red); color: white; }
+        .btn-continue { background: transparent; color: #444; border: 1px solid #222; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="static-bg" id="bg"></div>
+    <div class="emoji-rain" id="emoji-layer"></div>
+
+    <div class="bg-slogan-wrap">
+        <div id="top-bg-slogan">LIMITLESS GAINS</div>
+    </div>
+
+    <div class="main-container">
+        <div class="review-card">
+            <div class="logo-ring"><i class="fas fa-dumbbell" style="font-size: 42px; color: #fff;"></i></div>
+            <h1>Alpha Core Fitness</h1>
+            <div class="location">Dehrakhas, Dehradun</div>
+
+            <div class="star-box" id="stars">
+                <i class="fas fa-star" data-v="1"></i><i class="fas fa-star" data-v="2"></i>
+                <i class="fas fa-star" data-v="3"></i><i class="fas fa-star" data-v="4"></i>
+                <i class="fas fa-star" data-v="5"></i>
+            </div>
+
+            <textarea id="review-text" placeholder="Select stars for an Alpha review..."></textarea>
+            <button class="alpha-btn" onclick="checkRating()">Confirm Review</button>
+
+            <div class="bottom-quote-box">
+                <div id="bottom-dynamic-quote">Your only limit is you.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-modal">
+        <div class="modal-content">
+            <p style="color:white">Itne kam star or review kyu? 🥲<br><br><b>Stars help us in motivating us.</b></p>
+            <div class="modal-btns">
+                <button class="modal-btn btn-change" onclick="closeModal()">Theek hai, Change karta hu</button>
+                <button class="modal-btn btn-continue" onclick="executeFinalSubmit()">Continue Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <a href="https://instagram.com/alphacorefitnesss" class="insta-float" target="_blank">
+        <i class="fab fa-instagram" style="color: #E1306C; font-size: 18px;"></i> @alphacorefitnesss
+    </a>
+
+    <script>
+        const RED_FLAGS = ['bad', 'worst', 'dirty', 'expensive', 'rude', 'scam', 'waste', 'bekar', 'ganda', 'bakwas', 'faltu', 'lutere', 'mehenga', 'kharab', 'ghatiya'];
+        
+        // SLOGAN & QUOTE LIBRARIES
+        const topSlogans = ["BUILT DIFFERENT", "STAY ALPHA", "LEAVE NO DOUBT", "UNLEASH THE BEAST", "FOCUS & RESULTS"];
+        const miniQuotes = ["Pain is temporary, pride is forever.", "The only bad workout is the one that didn't happen.", "Dehradun's finest training facility.", "Hard work beats talent.", "Alpha mode starts here."];
+
+        // Randomize on load
+        document.getElementById('top-bg-slogan').innerText = topSlogans[Math.floor(Math.random() * topSlogans.length)];
+        document.getElementById('bottom-dynamic-quote').innerText = miniQuotes[Math.floor(Math.random() * miniQuotes.length)];
+
+        let rating = 0;
+        const reviewBox = document.getElementById('review-text');
+
+        // PRE-FILL REVIEW LOGIC
+        const openings = ["Top-tier gym experience!", "Alpha Core is Dehradun's best.", "Highly professional environment."];
+        const middles = ["Equipment is world-class.", "The energy here is unmatched.", "Extremely clean and focused."];
+        const closers = ["Joining was the best decision!", "Alpha family is the best.", "Recommended for serious gains."];
+
+        document.querySelectorAll('#stars i').forEach(star => {
+            star.onclick = () => {
+                rating = parseInt(star.getAttribute('data-v'));
+                document.querySelectorAll('#stars i').forEach(s => s.classList.toggle('active', s.getAttribute('data-v') <= rating));
+                
+                if (reviewBox.value === "" || openings.some(o => reviewBox.value.startsWith(o))) {
+                    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                    reviewBox.value = `${pick(openings)} ${pick(middles)} ${pick(closers)}`;
+                }
+            };
+        });
+
+        function checkRating() {
+            if (rating === 0) return alert("Select stars first!");
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ff3131', '#ffffff', '#ffd700'] });
+            if (rating < 4) document.getElementById('custom-modal').style.display = 'flex';
+            else executeFinalSubmit();
+        }
+
+        function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+        async function executeFinalSubmit() {
+            closeModal();
+            const val = reviewBox.value.toLowerCase();
+            const containsRedFlag = RED_FLAGS.some(flag => val.includes(flag));
+
+            if (rating >= 4 && !containsRedFlag) {
+                await navigator.clipboard.writeText(reviewBox.value);
+                setTimeout(() => {
+                    window.open("https://search.google.com/local/writereview?placeid=ChIJ8yvQLQArCTkRGD7Fc7IawW4", "_blank");
+                }, 1000);
+            } else {
+                const msg = `🚨 *REPUTATION ALERT*\nRating: ${rating} Stars\nFeedback: ${reviewBox.value}`;
+                fetch(`https://api.telegram.org/bot8584187176:AAGbiTxOelG2noQNlsdgPMBCdYCZ-uk67Oc/sendMessage?chat_id=7835819531&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+                alert("Thank you for your feedback!");
+            }
+        }
+
+        // EMOJI ENGINE
+        function createEmoji() {
+            const emojis = ['🏋️‍♂️', '💪', '❤️', '⚫', '🔋'];
+            const layer = document.getElementById('emoji-layer');
+            const el = document.createElement('div');
+            el.className = 'moving-emoji';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = Math.random() * 4 + 6 + 's';
+            layer.appendChild(el);
+            setTimeout(() => { el.remove(); }, 10000);
+        }
+        setInterval(createEmoji, 1500);
+
+        window.onscroll = () => {
+            const blurAmt = Math.min(window.scrollY / 45, 12);
+            document.getElementById('bg').style.filter = `blur(${blurAmt}px) brightness(0.2)`;
+        };
+    </script>
+</body>
+</html>
+
